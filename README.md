@@ -1,4 +1,8 @@
-# Rota — İş Başvurusu Takip Uygulaması
+<div align="center">
+
+# Rota
+
+### İş başvuruların için kişisel çalışma alanın.
 
 [![CI](https://github.com/hazalpinaar/job-application-tracker/actions/workflows/ci.yml/badge.svg)](https://github.com/hazalpinaar/job-application-tracker/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
@@ -7,15 +11,39 @@ Başvurularını, görüşmelerini ve tekliflerini tek yerde takip et. Türkçe 
 
 **Next.js · React · TypeScript · Tailwind CSS · Prisma · SQLite**
 
+[Ekran görüntüleri](#ekran-görüntüleri) · [Hızlı başlangıç](#hızlı-başlangıç) · [Mobil kullanım](#mobil-kullanım) · [Komutlar](#komutlar)
+
+</div>
+
+## Proje hakkında
+
+Rota, iş arama sürecindeki başvuruları ve notları tek bir yerde tutmak için geliştirilmiş Türkçe bir web uygulamasıdır. Her kullanıcı kendi hesabıyla giriş yapar ve yalnızca kendi başvurularına erişir. Masaüstünde tablo, telefon ekranlarında kart görünümü kullanılır.
+
+> **Durum:** Yerelde çalıştırılabilir. Canlı demo henüz yayınlanmadı. Gerçek e-posta gönderimi için SMTP yapılandırması gerekir.
+
 ## Ekran görüntüleri
 
-Aşağıdaki ekranlar kişisel kullanıcı verisi içermez.
+Aşağıdaki görseller uygulamanın çalışan sürümünden alınmıştır; kişisel hesap veya başvuru verisi içermez.
+
+### Masaüstü giriş ekranı
 
 ![Giriş ekranı](docs/screenshots/login.jpg)
 
-| Mobil görünüm                               | Hesap kurtarma                                    |
-| ------------------------------------------- | ------------------------------------------------- |
-| ![Mobil giriş](docs/screenshots/mobile.jpg) | ![Şifre sıfırlama](docs/screenshots/recovery.jpg) |
+<details>
+<summary><strong>Mobil görünümü göster</strong></summary>
+<br />
+<p align="center">
+  <img src="docs/screenshots/mobile.jpg" alt="Rota mobil giriş ekranı" width="340" />
+</p>
+</details>
+
+<details>
+<summary><strong>Şifre kurtarma ekranını göster</strong></summary>
+<br />
+
+![Rota — şifremi unuttum ekranı](docs/screenshots/recovery.jpg)
+
+</details>
 
 ## Özellikler
 
@@ -30,15 +58,33 @@ Aşağıdaki ekranlar kişisel kullanıcı verisi içermez.
 - SMTP üzerinden gerçek e-posta veya yerelde dosyaya yazılan e-posta önizlemesi
 - Şifre yenilendiğinde önceki tüm oturumların iptali
 
+Başvuru durumları: **Başvuruldu → Görüşme → Teklif / Reddedildi**. Durumlar başvuru düzenleme formundan değiştirilir.
+
+## Kullanılan teknolojiler
+
+| Teknoloji                  | Kullanım amacı                                          |
+| -------------------------- | ------------------------------------------------------- |
+| Next.js App Router + React | Sayfalar, arayüz bileşenleri ve API route'ları          |
+| TypeScript                 | Uygulama türleri ve statik kontrol                      |
+| Tailwind CSS + CSS         | Duyarlı arayüz ve görsel tasarım                        |
+| Prisma + SQLite            | Kullanıcı, başvuru, oturum ve token kayıtları           |
+| Node.js Crypto             | Şifre ve token özetleri                                 |
+| Nodemailer                 | Yapılandırılabilir SMTP gönderimi                       |
+| GitHub Actions             | Otomatik biçim, tür, derleme ve entegrasyon kontrolleri |
+
 ## Hızlı başlangıç
 
 Node.js **22+**, npm ve Git gerekir. Node.js 22 ile test edilmiştir.
+
+### 1. Repoyu indir ve bağımlılıkları kur
 
 ```bash
 git clone https://github.com/hazalpinaar/job-application-tracker.git
 cd job-application-tracker
 npm ci
 ```
+
+### 2. Ortam dosyasını oluştur
 
 `.env.example` dosyasını `.env` olarak kopyala:
 
@@ -51,6 +97,14 @@ Copy-Item .env.example .env
 # macOS / Linux
 cp .env.example .env
 ```
+
+Varsayılan veritabanı bağlantısı:
+
+```dotenv
+DATABASE_URL="file:./dev.db"
+```
+
+### 3. Veritabanını hazırla ve uygulamayı başlat
 
 ```bash
 npm run db:push
@@ -151,6 +205,8 @@ docs/                  Ekran görüntüleri ve dağıtım rehberi
 
 ## Katkı ve lisans
 
-Değişiklikten önce bir branch aç, kodu biçimlendir ve kontrolleri çalıştır. Gerçek kullanıcı bilgilerini testlere / ekran görüntülerine koyma. [MIT lisansı](LICENSE) ile paylaşılır.
+Hata veya geliştirme önerileri için [issue açabilirsin](https://github.com/hazalpinaar/job-application-tracker/issues). Değişiklikleri ayrı bir branch üzerinde yap, kodu biçimlendir ve kontrolleri çalıştırdıktan sonra pull request gönder. Gerçek kullanıcı bilgilerini testlere veya ekran görüntülerine ekleme.
+
+[MIT lisansı](LICENSE) — © 2026 [hazalpinaar](https://github.com/hazalpinaar).
 
 Teknik kaynaklar: [Next.js authentication](https://nextjs.org/docs/app/guides/authentication), [Node.js Crypto](https://nodejs.org/docs/latest-v22.x/api/crypto.html), [Nodemailer SMTP](https://nodemailer.com/smtp), [OWASP Forgot Password](https://cheatsheetseries.owasp.org/cheatsheets/Forgot_Password_Cheat_Sheet.html).
