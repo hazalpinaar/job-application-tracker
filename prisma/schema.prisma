@@ -1,0 +1,42 @@
+generator client {
+  provider = "prisma-client-js"
+}
+datasource db {
+  provider = "sqlite"
+  url = env("DATABASE_URL")
+}
+model Application {
+  userId String?
+  user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id String @id @default(cuid())
+  company String
+  position String
+  url String @default("")
+  appliedAt String
+  status String @default("APPLIED")
+  notes String @default("")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model User {
+  id String @id @default(cuid())
+  name String
+  email String @unique
+  passwordHash String
+  createdAt DateTime @default(now())
+  applications Application[]
+  sessions Session[]
+}
+model Session {
+  tokenHash String @id
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  @@index([userId])
+}
+model AuthAttempt {
+  key String @id
+  count Int @default(1)
+  expiresAt DateTime
+}
