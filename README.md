@@ -23,7 +23,53 @@ Rota, iş arama sürecindeki başvuruları ve notları tek bir yerde tutmak içi
 
 ## Ekran görüntüleri
 
-Aşağıdaki görseller uygulamanın çalışan sürümünden alınmıştır; kişisel hesap veya başvuru verisi içermez.
+Aşağıdaki görseller uygulamanın çalışan sürümünden alınmıştır. Panel görüntüleri ayrı bir demo veritabanında, tamamen sahte kişi ve şirket kayıtlarıyla hazırlanmıştır; kişisel hesap veya başvuru verisi içermez.
+
+### Ana ekran — başvuru paneli
+
+Başvurular, durum etiketleri, görüşme ve teklif sayaçları tek ekranda takip edilir.
+
+![Rota — başvuru paneli](docs/screenshots/dashboard.jpg)
+
+### Başvuru ekleme
+
+Şirket, pozisyon, tarih, ilan bağlantısı ve notlar formdan kaydedilir.
+
+![Rota — yeni başvuru formu](docs/screenshots/add-application.jpg)
+
+<details>
+<summary><strong>Başvuru kaydedildikten sonraki ekranı göster</strong></summary>
+<br />
+
+![Rota — yeni başvuru listeye eklendi](docs/screenshots/application-added.jpg)
+
+</details>
+
+### Başvuru düzenleme
+
+Kayıtlı bilgileri, notları ve başvuru durumunu güncelleyebilirsin.
+
+![Rota — başvuru düzenleme](docs/screenshots/edit-application.jpg)
+
+### Başvuru silme onayı
+
+Silme işleminden önce hangi başvurunun kaldırılacağını gösteren bir onay ekranı açılır.
+
+![Rota — başvuru silme onayı](docs/screenshots/delete-application.jpg)
+
+### Duruma göre filtreleme
+
+Örneğin yalnızca görüşme aşamasındaki başvuruları görüntüleyebilirsin.
+
+![Rota — görüşme filtresi](docs/screenshots/filter-applications.jpg)
+
+<details>
+<summary><strong>Mobil ana ekranı göster</strong></summary>
+<br />
+<p align="center">
+  <img src="docs/screenshots/mobile-dashboard.jpg" alt="Rota mobil başvuru kartları" width="340" />
+</p>
+</details>
 
 ### Masaüstü giriş ekranı
 
