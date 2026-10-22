@@ -1,29 +1,544 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { ArrowUpRight, BriefcaseBusiness, Plus, Search, X, Pencil, Trash2, Compass, Check, Download, LayoutDashboard, CalendarDays, LogOut } from "lucide-react";
+import {
+  ArrowUpRight,
+  BriefcaseBusiness,
+  Plus,
+  Search,
+  X,
+  Pencil,
+  Trash2,
+  Compass,
+  Check,
+  Download,
+  LayoutDashboard,
+  CalendarDays,
+  LogOut,
+} from "lucide-react";
 import { Application, Status, statuses } from "@/lib/application";
-type Draft = Omit<Application,"id">;
-const fresh = (): Draft => ({company:"",position:"",url:"",appliedAt:new Date().toLocaleDateString("en-CA"),status:"APPLIED",notes:""});
-export default function Dashboard({ user }: { user: { name: string; email: string } }) {
- const [items,setItems]=useState<Application[]>([]),[loading,setLoading]=useState(true),[error,setError]=useState(""),[query,setQuery]=useState(""),[filter,setFilter]=useState("ALL"),[draft,setDraft]=useState<Draft>(fresh),[editId,setEditId]=useState<string|null>(null),[saving,setSaving]=useState(false),[deleting,setDeleting]=useState<Application|null>(null),[notice,setNotice]=useState("");
- const dialog=useRef<HTMLDialogElement>(null), confirm=useRef<HTMLDialogElement>(null);
- async function load(){setLoading(true);setError("");try{const r=await fetch("/api/applications");if(r.status===401){window.location.assign("/login");return;}if(!r.ok)throw Error("Başvurular yüklenemedi. Tekrar deneyin.");setItems(await r.json());}catch(e){setError(e instanceof TypeError ? "Sunucuya ulaşılamıyor. Uygulama sunucusunu başlatıp tekrar deneyin; formdaki bilgileriniz korunuyor." : (e as Error).message);}finally{setLoading(false);}}
- useEffect(()=>{void load();},[]);
- function open(item?:Application){setError("");setEditId(item?.id??null);setDraft(item?{...item}:fresh());dialog.current?.showModal();}
- async function save(e:React.FormEvent){e.preventDefault();setSaving(true);setError("");try{const r=await fetch("/api/applications",{method:editId?"PUT":"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({...draft,id:editId})});const data=await r.json();if(!r.ok)throw Error(data.error);dialog.current?.close();setNotice(editId?"Başvuru güncellendi.":"Yeni başvuru eklendi.");await load();}catch(e){setError(e instanceof TypeError ? "Sunucuya ulaşılamıyor. Uygulama sunucusunu başlatıp tekrar deneyin; formdaki bilgileriniz korunuyor." : (e as Error).message);}finally{setSaving(false);}}
- async function remove(){if(!deleting)return;setSaving(true);setError("");try{const r=await fetch("/api/applications",{method:"DELETE",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:deleting.id})});if(!r.ok)throw Error((await r.json()).error);confirm.current?.close();setDeleting(null);setNotice("Başvuru silindi.");await load();}catch(e){setError(e instanceof TypeError ? "Sunucuya ulaşılamıyor. Uygulama sunucusunu başlatıp tekrar deneyin; formdaki bilgileriniz korunuyor." : (e as Error).message);}finally{setSaving(false);}}
- const visible=items.filter(i=>(filter==="ALL"||i.status===filter)&&`${i.company} ${i.position}`.toLocaleLowerCase("tr").includes(query.toLocaleLowerCase("tr")));
- function exportData(){const blob=new Blob([JSON.stringify(items,null,2)],{type:"application/json"});const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download="rota-basvurular.json";a.click();URL.revokeObjectURL(url);}
- async function logout(){setError("");try{const r=await fetch("/api/auth/logout",{method:"POST"});if(!r.ok)throw Error("Çıkış yapılamadı. Tekrar deneyin.");window.location.assign("/login");}catch(e){setError(e instanceof TypeError?"Sunucuya ulaşılamıyor.":(e as Error).message);}}
- const field=(key:keyof Draft,value:string)=>setDraft(d=>({...d,[key]:value}));
- return <div className="shell"><aside><a className="brand" href="/"><span className="brand-icon"><Compass size={25}/></span>rota<span className="brand-dot">.</span></a><div className="workspace-label">KİŞİSEL ÇALIŞMA ALANI</div><div className="nav-active"><LayoutDashboard size={18}/> Başvurularım <span>{items.length}</span></div><div className="sidebar-note"><span className="small-icon">↗</span><h3>Bir sonraki adımın burada.</h3><p>Her başvuru yeni bir olasılık. Yolculuğunu tek bir yerden takip et.</p></div><div className="profile"><div className="avatar">{user.name.slice(0,1).toLocaleUpperCase("tr")}</div><div><strong>{user.name}</strong><small title={user.email}>{user.email}</small></div><span className="online"/></div></aside>
- <main><header><div className="breadcrumb">Çalışma alanı <span>/</span> <strong>Başvurularım</strong></div><div className="header-account"><span className="header-tag"><span className="online"/> {user.name}</span><button className="logout-button" onClick={()=>void logout()}><LogOut size={16}/><span>Çıkış yap</span></button></div></header><div className="content"><div className="heading"><div><div className="eyebrow">HER BAŞVURU, YENİ BİR İHTİMAL</div><h1>Bir sonraki adımına odaklan.</h1><p>Başvurularını düzenle, gelişmeleri takip et, fırsatları kaçırma.</p></div><button className="primary" onClick={()=>open()}><Plus size={18}/> Yeni başvuru</button></div>
- <section className="stats" aria-label="Başvuru özeti">{[{label:"Toplam başvuru",count:items.length,icon:<BriefcaseBusiness size={20}/>,hint:"Kariyerine açılan kapılar",className:"total"},{label:"Görüşme aşamasında",count:items.filter(i=>i.status==="INTERVIEW").length,icon:<CalendarDays size={20}/>,hint:"Kendini gösterme zamanı",className:"interview"},{label:"Alınan teklifler",count:items.filter(i=>i.status==="OFFER").length,icon:<Check size={20}/>,hint:"Emeklerinin karşılığı",className:"offer"}].map(s=><article className={`stat ${s.className}`} key={s.label}><div className="stat-top"><span>{s.label}</span><div className="stat-icon">{s.icon}</div></div><strong>{s.count.toString().padStart(2,"0")}</strong><small>{s.hint}</small></article>)}</section>
- <section className="panel"><div className="panel-heading"><div><h2>Başvurularım <span className="count">{items.length}</span></h2><p>Tüm fırsatların, tek bir yerde.</p></div><button className="secondary" onClick={exportData} disabled={!items.length}><Download size={16}/> Dışa aktar</button></div><div className="toolbar"><div className="tabs" role="group" aria-label="Durum filtresi">{[["ALL","Tümü"],...Object.entries(statuses)].map(([key,label])=><button key={key} className={filter===key?"selected":""} onClick={()=>setFilter(key)}>{label}</button>)}</div><label className="search"><Search size={17}/><input aria-label="Şirket veya pozisyon ara" placeholder="Şirket veya pozisyon ara…" value={query} onChange={e=>setQuery(e.target.value)}/></label></div>
- {notice&&<div className="notice" role="status">{notice}<button aria-label="Bildirimi kapat" onClick={()=>setNotice("")}><X size={14}/></button></div>}{error&&!dialog.current?.open&&!confirm.current?.open&&<div className="error" role="alert">{error}<button onClick={()=>void load()}>Tekrar dene</button></div>}
- <div className="table-wrap"><table><thead><tr><th>ŞİRKET / POZİSYON</th><th>BAŞVURU TARİHİ</th><th>DURUM</th><th>İLAN</th><th><span className="sr-only">İşlemler</span></th></tr></thead><tbody>{visible.map(i=><tr key={i.id}><td><button className="company" onClick={()=>open(i)}><span className="company-logo">{i.company.slice(0,2).toLocaleUpperCase("tr")}</span><span><strong>{i.company}</strong><small>{i.position}</small></span></button></td><td className="date" data-label="Tarih">{new Intl.DateTimeFormat("tr-TR",{day:"numeric",month:"short",year:"numeric"}).format(new Date(i.appliedAt+"T12:00:00"))}</td><td data-label="Durum"><span className={`badge ${i.status}`}><span/> {statuses[i.status]}</span></td><td data-label="İlan">{i.url?<a href={i.url} target="_blank" rel="noopener noreferrer" className="job-link">İlana git <ArrowUpRight size={14}/></a>:<span className="muted">—</span>}</td><td><div className="actions"><button aria-label={`${i.company} başvurusunu düzenle`} onClick={()=>open(i)}><Pencil size={16}/></button><button aria-label={`${i.company} başvurusunu sil`} onClick={()=>{setError("");setDeleting(i);confirm.current?.showModal();}}><Trash2 size={16}/></button></div></td></tr>)}</tbody></table></div>
- {(loading||!visible.length)&&<div className="empty"><div className="empty-icon"><BriefcaseBusiness size={28}/></div><h3>{loading?"Başvurular yükleniyor…":items.length?"Eşleşen başvuru bulunamadı":"Yeni bir yolculuğa başlayalım"}</h3><p>{loading?"Kayıtların hazırlanıyor.":items.length?"Arama veya durum filtreni değiştirmeyi dene.":"İlk başvurunu ekle; kariyer yolculuğun burada şekillensin."}</p>{!loading&&!items.length&&<button className="primary" onClick={()=>open()}><Plus size={17}/> İlk başvurunu ekle</button>}</div>}
- <div className="panel-footer"><span>{visible.length} başvuru gösteriliyor</span><span>Her adım seni hedefine yaklaştırır. ↗</span></div></section><footer>ROTA <span>•</span> Kariyer yolculuğuna biraz düzen.</footer></div></main>
- <dialog ref={dialog} onCancel={e=>{if(saving)e.preventDefault();}}><form onSubmit={save}><div className="modal-heading"><div><div className="eyebrow">KARİYER YOLCULUĞUN</div><h2>{editId?"Başvuruyu düzenle":"Yeni bir fırsat ekle"}</h2></div><button type="button" aria-label="Kapat" disabled={saving} onClick={()=>dialog.current?.close()}><X size={21}/></button></div><div className="form-grid"><label>Şirket adı *<input autoFocus required maxLength={120} value={draft.company} onChange={e=>field("company",e.target.value)} placeholder="Örn. Acme"/></label><label>Pozisyon *<input required maxLength={160} value={draft.position} onChange={e=>field("position",e.target.value)} placeholder="Örn. Frontend Developer"/></label><label>Başvuru tarihi *<input type="date" required value={draft.appliedAt} onChange={e=>field("appliedAt",e.target.value)}/></label><label>Durum<select value={draft.status} onChange={e=>field("status",e.target.value as Status)}>{Object.entries(statuses).map(([k,v])=><option key={k} value={k}>{v}</option>)}</select></label><label className="full">İlan bağlantısı<input type="url" maxLength={2000} value={draft.url} onChange={e=>field("url",e.target.value)} placeholder="https://…"/></label><label className="full">Notların<textarea rows={4} maxLength={5000} value={draft.notes} onChange={e=>field("notes",e.target.value)} placeholder="Görüşme detayları, hatırlatmalar, aklında kalanlar…"/></label></div>{error&&<p className="error" role="alert">{error}</p>}<div className="modal-footer"><button className="secondary" type="button" disabled={saving} onClick={()=>dialog.current?.close()}>Vazgeç</button><button className="primary" disabled={saving}>{saving?"Kaydediliyor…":"Başvuruyu kaydet"}</button></div></form></dialog>
- <dialog ref={confirm} onCancel={e=>{if(saving)e.preventDefault();}}><h2>Başvuru silinsin mi?</h2><p className="delete-copy">{deleting?.company} başvurusu ve notları kalıcı olarak silinecek.</p>{error&&<p className="error" role="alert">{error}</p>}<div className="modal-footer"><button className="secondary" disabled={saving} onClick={()=>confirm.current?.close()}>Vazgeç</button><button className="danger" disabled={saving} onClick={()=>void remove()}>{saving?"Siliniyor…":"Başvuruyu sil"}</button></div></dialog></div>;
+type Draft = Omit<Application, "id">;
+const fresh = (): Draft => ({
+  company: "",
+  position: "",
+  url: "",
+  appliedAt: new Date().toLocaleDateString("en-CA"),
+  status: "APPLIED",
+  notes: "",
+});
+export default function Dashboard({
+  user,
+}: {
+  user: { name: string; email: string; emailVerified: boolean };
+}) {
+  const [items, setItems] = useState<Application[]>([]),
+    [loading, setLoading] = useState(true),
+    [error, setError] = useState(""),
+    [query, setQuery] = useState(""),
+    [filter, setFilter] = useState("ALL"),
+    [draft, setDraft] = useState<Draft>(fresh),
+    [editId, setEditId] = useState<string | null>(null),
+    [saving, setSaving] = useState(false),
+    [deleting, setDeleting] = useState<Application | null>(null),
+    [notice, setNotice] = useState("");
+  const dialog = useRef<HTMLDialogElement>(null),
+    confirm = useRef<HTMLDialogElement>(null);
+  async function load() {
+    setLoading(true);
+    setError("");
+    try {
+      const r = await fetch("/api/applications");
+      if (r.status === 401) {
+        window.location.assign("/login");
+        return;
+      }
+      if (!r.ok) throw Error("Başvurular yüklenemedi. Tekrar deneyin.");
+      setItems(await r.json());
+    } catch (e) {
+      setError(
+        e instanceof TypeError
+          ? "Sunucuya ulaşılamıyor. Uygulama sunucusunu başlatıp tekrar deneyin; formdaki bilgileriniz korunuyor."
+          : (e as Error).message,
+      );
+    } finally {
+      setLoading(false);
+    }
+  }
+  useEffect(() => {
+    void load();
+  }, []);
+  function open(item?: Application) {
+    setError("");
+    setEditId(item?.id ?? null);
+    setDraft(item ? { ...item } : fresh());
+    dialog.current?.showModal();
+  }
+  async function save(e: React.FormEvent) {
+    e.preventDefault();
+    setSaving(true);
+    setError("");
+    try {
+      const r = await fetch("/api/applications", {
+        method: editId ? "PUT" : "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...draft, id: editId }),
+      });
+      const data = await r.json();
+      if (!r.ok) throw Error(data.error);
+      dialog.current?.close();
+      setNotice(editId ? "Başvuru güncellendi." : "Yeni başvuru eklendi.");
+      await load();
+    } catch (e) {
+      setError(
+        e instanceof TypeError
+          ? "Sunucuya ulaşılamıyor. Uygulama sunucusunu başlatıp tekrar deneyin; formdaki bilgileriniz korunuyor."
+          : (e as Error).message,
+      );
+    } finally {
+      setSaving(false);
+    }
+  }
+  async function remove() {
+    if (!deleting) return;
+    setSaving(true);
+    setError("");
+    try {
+      const r = await fetch("/api/applications", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: deleting.id }),
+      });
+      if (!r.ok) throw Error((await r.json()).error);
+      confirm.current?.close();
+      setDeleting(null);
+      setNotice("Başvuru silindi.");
+      await load();
+    } catch (e) {
+      setError(
+        e instanceof TypeError
+          ? "Sunucuya ulaşılamıyor. Uygulama sunucusunu başlatıp tekrar deneyin; formdaki bilgileriniz korunuyor."
+          : (e as Error).message,
+      );
+    } finally {
+      setSaving(false);
+    }
+  }
+  const visible = items.filter(
+    (i) =>
+      (filter === "ALL" || i.status === filter) &&
+      `${i.company} ${i.position}`
+        .toLocaleLowerCase("tr")
+        .includes(query.toLocaleLowerCase("tr")),
+  );
+  function exportData() {
+    const blob = new Blob([JSON.stringify(items, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "rota-basvurular.json";
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+  async function logout() {
+    setError("");
+    try {
+      const r = await fetch("/api/auth/logout", { method: "POST" });
+      if (!r.ok) throw Error("Çıkış yapılamadı. Tekrar deneyin.");
+      window.location.assign("/login");
+    } catch (e) {
+      setError(e instanceof TypeError ? "Sunucuya ulaşılamıyor." : (e as Error).message);
+    }
+  }
+  const field = (key: keyof Draft, value: string) =>
+    setDraft((d) => ({ ...d, [key]: value }));
+  return (
+    <div className="shell">
+      <aside>
+        <a className="brand" href="/">
+          <span className="brand-icon">
+            <Compass size={25} />
+          </span>
+          rota<span className="brand-dot">.</span>
+        </a>
+        <div className="workspace-label">KİŞİSEL ÇALIŞMA ALANI</div>
+        <div className="nav-active">
+          <LayoutDashboard size={18} /> Başvurularım <span>{items.length}</span>
+        </div>
+        <div className="sidebar-note">
+          <span className="small-icon">↗</span>
+          <h3>Bir sonraki adımın burada.</h3>
+          <p>Her başvuru yeni bir olasılık. Yolculuğunu tek bir yerden takip et.</p>
+        </div>
+        <div className="profile">
+          <div className="avatar">{user.name.slice(0, 1).toLocaleUpperCase("tr")}</div>
+          <div>
+            <strong>{user.name}</strong>
+            <small title={user.email}>{user.email}</small>
+          </div>
+          <span className="online" />
+        </div>
+      </aside>
+      <main>
+        <header>
+          <div className="breadcrumb">
+            Çalışma alanı <span>/</span> <strong>Başvurularım</strong>
+          </div>
+          <div className="header-account">
+            <span className="header-tag">
+              <span className="online" /> {user.name}
+            </span>
+            <button className="logout-button" onClick={() => void logout()}>
+              <LogOut size={16} />
+              <span>Çıkış yap</span>
+            </button>
+          </div>
+        </header>
+        <div className="content">
+          <div className="heading">
+            <div>
+              <div className="eyebrow">HER BAŞVURU, YENİ BİR İHTİMAL</div>
+              <h1>Bir sonraki adımına odaklan.</h1>
+              <p>Başvurularını düzenle, gelişmeleri takip et, fırsatları kaçırma.</p>
+            </div>
+            <button className="primary" onClick={() => open()}>
+              <Plus size={18} /> Yeni başvuru
+            </button>
+          </div>
+          {!user.emailVerified && (
+            <div className="verification-banner">
+              <span>E-posta adresin henüz doğrulanmadı.</span>
+              <a href="/verify-email">Doğrulama bağlantısı iste ↗</a>
+            </div>
+          )}
+          <section className="stats" aria-label="Başvuru özeti">
+            {[
+              {
+                label: "Toplam başvuru",
+                count: items.length,
+                icon: <BriefcaseBusiness size={20} />,
+                hint: "Kariyerine açılan kapılar",
+                className: "total",
+              },
+              {
+                label: "Görüşme aşamasında",
+                count: items.filter((i) => i.status === "INTERVIEW").length,
+                icon: <CalendarDays size={20} />,
+                hint: "Kendini gösterme zamanı",
+                className: "interview",
+              },
+              {
+                label: "Alınan teklifler",
+                count: items.filter((i) => i.status === "OFFER").length,
+                icon: <Check size={20} />,
+                hint: "Emeklerinin karşılığı",
+                className: "offer",
+              },
+            ].map((s) => (
+              <article className={`stat ${s.className}`} key={s.label}>
+                <div className="stat-top">
+                  <span>{s.label}</span>
+                  <div className="stat-icon">{s.icon}</div>
+                </div>
+                <strong>{s.count.toString().padStart(2, "0")}</strong>
+                <small>{s.hint}</small>
+              </article>
+            ))}
+          </section>
+          <section className="panel">
+            <div className="panel-heading">
+              <div>
+                <h2>
+                  Başvurularım <span className="count">{items.length}</span>
+                </h2>
+                <p>Tüm fırsatların, tek bir yerde.</p>
+              </div>
+              <button className="secondary" onClick={exportData} disabled={!items.length}>
+                <Download size={16} /> Dışa aktar
+              </button>
+            </div>
+            <div className="toolbar">
+              <div className="tabs" role="group" aria-label="Durum filtresi">
+                {[["ALL", "Tümü"], ...Object.entries(statuses)].map(([key, label]) => (
+                  <button
+                    key={key}
+                    className={filter === key ? "selected" : ""}
+                    onClick={() => setFilter(key)}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+              <label className="search">
+                <Search size={17} />
+                <input
+                  aria-label="Şirket veya pozisyon ara"
+                  placeholder="Şirket veya pozisyon ara…"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                />
+              </label>
+            </div>
+            {notice && (
+              <div className="notice" role="status">
+                {notice}
+                <button aria-label="Bildirimi kapat" onClick={() => setNotice("")}>
+                  <X size={14} />
+                </button>
+              </div>
+            )}
+            {error && !dialog.current?.open && !confirm.current?.open && (
+              <div className="error" role="alert">
+                {error}
+                <button onClick={() => void load()}>Tekrar dene</button>
+              </div>
+            )}
+            <div className="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>ŞİRKET / POZİSYON</th>
+                    <th>BAŞVURU TARİHİ</th>
+                    <th>DURUM</th>
+                    <th>İLAN</th>
+                    <th>
+                      <span className="sr-only">İşlemler</span>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {visible.map((i) => (
+                    <tr key={i.id}>
+                      <td>
+                        <button className="company" onClick={() => open(i)}>
+                          <span className="company-logo">
+                            {i.company.slice(0, 2).toLocaleUpperCase("tr")}
+                          </span>
+                          <span>
+                            <strong>{i.company}</strong>
+                            <small>{i.position}</small>
+                          </span>
+                        </button>
+                      </td>
+                      <td className="date" data-label="Tarih">
+                        {new Intl.DateTimeFormat("tr-TR", {
+                          day: "numeric",
+                          month: "short",
+                          year: "numeric",
+                        }).format(new Date(i.appliedAt + "T12:00:00"))}
+                      </td>
+                      <td data-label="Durum">
+                        <span className={`badge ${i.status}`}>
+                          <span /> {statuses[i.status]}
+                        </span>
+                      </td>
+                      <td data-label="İlan">
+                        {i.url ? (
+                          <a
+                            href={i.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="job-link"
+                          >
+                            İlana git <ArrowUpRight size={14} />
+                          </a>
+                        ) : (
+                          <span className="muted">—</span>
+                        )}
+                      </td>
+                      <td>
+                        <div className="actions">
+                          <button
+                            aria-label={`${i.company} başvurusunu düzenle`}
+                            onClick={() => open(i)}
+                          >
+                            <Pencil size={16} />
+                          </button>
+                          <button
+                            aria-label={`${i.company} başvurusunu sil`}
+                            onClick={() => {
+                              setError("");
+                              setDeleting(i);
+                              confirm.current?.showModal();
+                            }}
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            {(loading || !visible.length) && (
+              <div className="empty">
+                <div className="empty-icon">
+                  <BriefcaseBusiness size={28} />
+                </div>
+                <h3>
+                  {loading
+                    ? "Başvurular yükleniyor…"
+                    : items.length
+                      ? "Eşleşen başvuru bulunamadı"
+                      : "Yeni bir yolculuğa başlayalım"}
+                </h3>
+                <p>
+                  {loading
+                    ? "Kayıtların hazırlanıyor."
+                    : items.length
+                      ? "Arama veya durum filtreni değiştirmeyi dene."
+                      : "İlk başvurunu ekle; kariyer yolculuğun burada şekillensin."}
+                </p>
+                {!loading && !items.length && (
+                  <button className="primary" onClick={() => open()}>
+                    <Plus size={17} /> İlk başvurunu ekle
+                  </button>
+                )}
+              </div>
+            )}
+            <div className="panel-footer">
+              <span>{visible.length} başvuru gösteriliyor</span>
+              <span>Her adım seni hedefine yaklaştırır. ↗</span>
+            </div>
+          </section>
+          <footer>
+            ROTA <span>•</span> Kariyer yolculuğuna biraz düzen.
+          </footer>
+        </div>
+      </main>
+      <dialog
+        ref={dialog}
+        onCancel={(e) => {
+          if (saving) e.preventDefault();
+        }}
+      >
+        <form onSubmit={save}>
+          <div className="modal-heading">
+            <div>
+              <div className="eyebrow">KARİYER YOLCULUĞUN</div>
+              <h2>{editId ? "Başvuruyu düzenle" : "Yeni bir fırsat ekle"}</h2>
+            </div>
+            <button
+              type="button"
+              aria-label="Kapat"
+              disabled={saving}
+              onClick={() => dialog.current?.close()}
+            >
+              <X size={21} />
+            </button>
+          </div>
+          <div className="form-grid">
+            <label>
+              Şirket adı *
+              <input
+                autoFocus
+                required
+                maxLength={120}
+                value={draft.company}
+                onChange={(e) => field("company", e.target.value)}
+                placeholder="Örn. Acme"
+              />
+            </label>
+            <label>
+              Pozisyon *
+              <input
+                required
+                maxLength={160}
+                value={draft.position}
+                onChange={(e) => field("position", e.target.value)}
+                placeholder="Örn. Frontend Developer"
+              />
+            </label>
+            <label>
+              Başvuru tarihi *
+              <input
+                type="date"
+                required
+                value={draft.appliedAt}
+                onChange={(e) => field("appliedAt", e.target.value)}
+              />
+            </label>
+            <label>
+              Durum
+              <select
+                value={draft.status}
+                onChange={(e) => field("status", e.target.value as Status)}
+              >
+                {Object.entries(statuses).map(([k, v]) => (
+                  <option key={k} value={k}>
+                    {v}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="full">
+              İlan bağlantısı
+              <input
+                type="url"
+                maxLength={2000}
+                value={draft.url}
+                onChange={(e) => field("url", e.target.value)}
+                placeholder="https://…"
+              />
+            </label>
+            <label className="full">
+              Notların
+              <textarea
+                rows={4}
+                maxLength={5000}
+                value={draft.notes}
+                onChange={(e) => field("notes", e.target.value)}
+                placeholder="Görüşme detayları, hatırlatmalar, aklında kalanlar…"
+              />
+            </label>
+          </div>
+          {error && (
+            <p className="error" role="alert">
+              {error}
+            </p>
+          )}
+          <div className="modal-footer">
+            <button
+              className="secondary"
+              type="button"
+              disabled={saving}
+              onClick={() => dialog.current?.close()}
+            >
+              Vazgeç
+            </button>
+            <button className="primary" disabled={saving}>
+              {saving ? "Kaydediliyor…" : "Başvuruyu kaydet"}
+            </button>
+          </div>
+        </form>
+      </dialog>
+      <dialog
+        ref={confirm}
+        onCancel={(e) => {
+          if (saving) e.preventDefault();
+        }}
+      >
+        <h2>Başvuru silinsin mi?</h2>
+        <p className="delete-copy">
+          {deleting?.company} başvurusu ve notları kalıcı olarak silinecek.
+        </p>
+        {error && (
+          <p className="error" role="alert">
+            {error}
+          </p>
+        )}
+        <div className="modal-footer">
+          <button
+            className="secondary"
+            disabled={saving}
+            onClick={() => confirm.current?.close()}
+          >
+            Vazgeç
+          </button>
+          <button className="danger" disabled={saving} onClick={() => void remove()}>
+            {saving ? "Siliniyor…" : "Başvuruyu sil"}
+          </button>
+        </div>
+      </dialog>
+    </div>
+  );
 }

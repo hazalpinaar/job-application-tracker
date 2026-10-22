@@ -5,3 +5,9 @@ node_modules/
 prisma/*.db*
 *.tsbuildinfo
 work/
+next-env.d.ts
+*.db
+*.db-*
+*.sqlite*
+*.pem
+*.key

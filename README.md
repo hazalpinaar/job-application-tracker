@@ -1,90 +1,156 @@
 # Rota — İş Başvurusu Takip Uygulaması
 
-Next.js App Router, React, TypeScript, Tailwind CSS, Prisma ve SQLite ile Türkçe başvuru takip uygulaması. Bilgisayar ve telefon tarayıcılarında çalışır.
+[![CI](https://github.com/hazalpinaar/job-application-tracker/actions/workflows/ci.yml/badge.svg)](https://github.com/hazalpinaar/job-application-tracker/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+
+Başvurularını, görüşmelerini ve tekliflerini tek yerde takip et. Türkçe arayüz; bilgisayar ve telefon tarayıcıları için uyumlu tasarım.
+
+**Next.js · React · TypeScript · Tailwind CSS · Prisma · SQLite**
+
+## Ekran görüntüleri
+
+Aşağıdaki ekranlar kişisel kullanıcı verisi içermez.
+
+![Giriş ekranı](docs/screenshots/login.jpg)
+
+| Mobil görünüm                               | Hesap kurtarma                                    |
+| ------------------------------------------- | ------------------------------------------------- |
+| ![Mobil giriş](docs/screenshots/mobile.jpg) | ![Şifre sıfırlama](docs/screenshots/recovery.jpg) |
 
 ## Özellikler
 
-- Modern giriş ve kayıt ekranları; e-posta / şifre ile hesap oluşturma
-- Kullanıcıya özel başvurular, sunucuda yetki kontrolü
-- Scrypt ile tuzlanmış şifre özetleri; HttpOnly, SameSite çerezli 7 günlük oturum
-- Çıkışta sunucu tarafında oturum iptali; hesap başına deneme sınırı
-- Ekleme, düzenleme, not tutma, onaylı silme, arama ve durum filtreleri
-- Başvuru / görüşme / teklif özeti, JSON dışa aktarma
-- Masaüstünde tablo, mobilde başvuru kartları ve dokunmaya uygun kontroller
+- E-posta / şifre ile kayıt ve giriş; cihazlar arasında 7 günlük oturum
+- Kullanıcıya özel başvurular; sunucuda her istek için yetki kontrolü
+- Başvuru ekleme, düzenleme, not tutma ve onaylı silme
+- Şirket / pozisyon araması, durum filtreleri ve özet sayaçları
+- JSON dışa aktarma
+- Masaüstünde tablo, mobilde kartlar ve dokunmaya uygun kontroller
+- Şifremi unuttum: 30 dakikalık tek kullanımlık bağlantı
+- E-posta doğrulama: 24 saatlik tek kullanımlık bağlantı, yeniden gönderme
+- SMTP üzerinden gerçek e-posta veya yerelde dosyaya yazılan e-posta önizlemesi
+- Şifre yenilendiğinde önceki tüm oturumların iptali
 
-## Kurulum
+## Hızlı başlangıç
 
-Node.js 22+ ve npm gerekir.
+Node.js **22+**, npm ve Git gerekir. Node.js 22 ile test edilmiştir.
 
 ```bash
+git clone https://github.com/hazalpinaar/job-application-tracker.git
+cd job-application-tracker
 npm ci
 ```
 
-`.env.example` dosyasını `.env` olarak kopyalayın (`Copy-Item .env.example .env`).
+`.env.example` dosyasını `.env` olarak kopyala:
+
+```powershell
+# Windows PowerShell
+Copy-Item .env.example .env
+```
+
+```bash
+# macOS / Linux
+cp .env.example .env
+```
 
 ```bash
 npm run db:push
 npm run dev
 ```
 
-http://127.0.0.1:3000 adresinde Hesap oluştur sekmesini kullanın. İlk oluşturulan hesap, önceki tek kullanıcılı sürümden kalan sahipsiz başvuruları devralır. Sonraki hesaplar boş başlar. İlk hesabı uygulamayı başkalarıyla paylaşmadan önce oluşturun.
+[http://127.0.0.1:3000](http://127.0.0.1:3000) adresini aç ve **Hesap oluştur** sekmesini kullan. Kurulum kendi boş veritabanını oluşturur; örnek hesap veya gerçek kullanıcı verisi repoda bulunmaz.
 
-```bash
-npm run build
-npm start
+Eski tek kullanıcılı sürümden yükseltiyorsan uygulamayı kapatıp `prisma/dev.db` dosyasını yedekle. İlk hesap, sahipsiz eski başvuruları devralır. Bunu yalnızca kendi yerel kurulumunda, uygulamayı başkalarına açmadan önce tamamla.
+
+## E-posta yapılandırması
+
+Varsayılan kurulum yerel kullanıma uygundur. E-posta servisi tanımlanmadan kayıt / giriş kullanılabilir; kurtarma ve yeniden doğrulama isteği, gönderimin yapılandırılmadığını açıkça belirtir.
+
+### Yerel önizleme — gerçek e-posta göndermez
+
+`.env` içine ekle:
+
+```dotenv
+APP_ORIGIN="http://127.0.0.1:3000"
+MAIL_TRANSPORT="file"
 ```
 
-Windows'ta derleme sonrasında `Rota-Baslat.cmd` dosyasını çift tıklayabilirsiniz. Pencereyi kullanım boyunca açık tutun.
+Sunucuyu yeniden başlat. Şifremi unuttum veya doğrulama isteği yaptığında mesaj, `work/mail/` klasörüne JSON olarak yazılır. Dosyadaki `link` alanını tarayıcıda aç. Bu klasör şifre sıfırlama bağlantıları içerir; kimseyle paylaşma, repoya ekleme. Dosya modu yalnızca localhost / loopback adreslerinde etkinleşir.
+
+### Gerçek SMTP gönderimi
+
+SMTP sağlayıcından aldığın değerleri **yalnızca `.env` veya hosting'in gizli ortam değişkenlerine** ekle:
+
+```dotenv
+APP_ORIGIN="https://rota.example.com"
+MAIL_TRANSPORT="smtp"
+SMTP_HOST="smtp.example.com"
+SMTP_PORT="587"
+SMTP_USER="your-smtp-user"
+SMTP_PASSWORD="your-smtp-password"
+MAIL_FROM="Rota <noreply@example.com>"
+REQUIRE_EMAIL_VERIFICATION="true"
+```
+
+Bu değerler örnektir; gerçek kimlik bilgileri içermez. Port 465 için doğrudan TLS, diğer portlarda zorunlu STARTTLS kullanılır. Gönderici adresini sağlayıcında doğrula. `APP_ORIGIN` sitenin tam kök adresi olmalıdır; bağlantılar ziyaretçinin gönderdiği Host başlığından üretilmez.
+
+Doğrulama zorunlu olduğunda eski kullanıcılar da giriş ekranındaki **E-postamı doğrula** bağlantısını kullanmalıdır. Gönderim hatası olursa hesap korunur ve doğrulama bağlantısı yeniden istenebilir.
 
 ## Mobil kullanım
 
-Arayüz telefon tarayıcıları için uyumludur; bu sürüm yerel Android / iOS uygulaması değildir. Telefonunuzdan erişmek için uygulamanın erişilebilir bir sunucuda çalışması gerekir. Aynı güvenilir Wi-Fi ağında denemek için:
+Bu bir **mobil uyumlu web uygulamasıdır**; App Store / Play Store paketi veya çevrimdışı uygulama değildir.
+
+Aynı güvenilir Wi-Fi ağındaki telefondan denemek için:
 
 ```bash
 npm run dev:network
 ```
 
-Bilgisayarın yerel IP adresini kullanın: `http://BILGISAYAR_IP_ADRESI:3000`. Telefondaki `localhost` veya `127.0.0.1`, bilgisayarınızı değil telefonu ifade eder. İşletim sisteminin ağ erişim ayarları bağlantıya izin vermelidir.
+Terminaldeki portla `http://BILGISAYARIN_YEREL_IP_ADRESI:3000` adresini aç. 3000 doluysa terminalin verdiği portu kullan. Telefondaki `127.0.0.1` bilgisayarı değil telefonu ifade eder. Kaynak kontrolü için `APP_ORIGIN` tanımlıysa, ziyaret ettiğin adresle aynı olmalıdır.
 
-## Dağıtım
+## Komutlar
 
-SQLite için kalıcı, yazılabilir disk gerekir. `.env` içinde `APP_ORIGIN=https://alan-adiniz.com` tanımlayın; bu ayar kaynak kontrolünü sabitler ve oturum çerezlerini Secure yapar. HTTPS kullanın. Yerel HTTP için bu değişken boş bırakılabilir. Çok sunuculu dağıtım öncesinde kalıcı ortak veritabanına geçin.
+| Komut                  | Görevi                                              |
+| ---------------------- | --------------------------------------------------- |
+| `npm run dev`          | Yerel geliştirme sunucusu                           |
+| `npm run dev:network`  | Yerel ağdan geliştirme erişimi                      |
+| `npm run db:push`      | Şemayı SQLite'a uygular; mevcut dosyayı sıfırlamaz  |
+| `npm run typecheck`    | Route türlerini üretir ve TypeScript kontrolü yapar |
+| `npm run format`       | Kod biçimlendirme                                   |
+| `npm run format:check` | Kod biçimi kontrolü                                 |
+| `npm run build`        | Üretim derlemesi                                    |
+| `npm start`            | Üretim sunucusu                                     |
+| `npm run test:auth`    | Ayrı veritabanıyla hesap ve yetki testleri          |
 
-E-posta doğrulaması, şifre sıfırlama ve sosyal giriş bu sürüme dahil değildir. E-posta şu anda hesap tanımlayıcısı olarak kullanılır; e-posta sahipliği doğrulanmaz.
+`Rota-Baslat.cmd`, Windows'ta derleme tamamlandıktan sonra çift tıklayarak çalıştırılabilir. Pencereyi kullanım boyunca açık tut.
 
-## Kontroller
+GitHub Actions, `main` push'larında ve pull request'lerde kurulum, biçim, tür, derleme ve hesap akışı testlerini çalıştırır. Testler 3101 portunda ayrı sunucu / veritabanı ve sahte e-posta dosyaları kullanır; gerçek başvurulara veya e-posta servisine dokunmaz.
 
-```bash
-npm run typecheck
-npm run build
-npm run test:auth
-```
+## Canlı yayın ve veriler
 
-Auth testi ayrı bir geçici veritabanı ve 3101 portu kullanır; gerçek başvurulara dokunmaz. Kayıt, giriş, kullanıcı ayrımı, oturum iptali ve kaynak kontrolünü test eder.
+GitHub kaynak kodunu barındırır; uygulama sunucusu veya veritabanı sunmaz. Canlı demo henüz kurulmamıştır. [Dağıtım rehberi](docs/deployment.md) HTTPS, kalıcı disk ve SMTP yapılandırmasını açıklar.
+
+- SQLite dosyası: `prisma/dev.db`. Kalıcı ve yazılabilir disk gerekir.
+- `.env`, veritabanı, yedekler, yerel e-postalar ve çalışma dosyaları Git tarafından dışlanır.
+- Şifreler scrypt ile tuzlanarak özetlenir; oturum ve hesap bağlantılarının veritabanında yalnızca SHA-256 özetleri saklanır.
+- Oturum çerezi HttpOnly / SameSite'tır; HTTPS `APP_ORIGIN` ayarında Secure olur.
+- E-posta bağlantıları tek kullanımlıdır; token URL parçasında taşınır ve sunucu erişim günlüklerine gönderilmez.
+- Yeni şifre kaydı tüm eski oturumları kapatır. Sıfırlama hesabı otomatik açmaz.
+- E-posta başına deneme sınırı vardır. Geniş ölçekli herkese açık hizmet için ayrıca ağ katmanında hız / istek boyutu sınırı ve izleme gerekir.
 
 ## Proje yapısı
 
-- `app/page.tsx`: Oturum denetimli ana sayfa
-- `app/login/page.tsx`, `components/login-form.tsx`: Giriş / kayıt ekranı
-- `components/dashboard.tsx`: Başvuru paneli
-- `app/api/auth/[action]/route.ts`: Kayıt, giriş, çıkış
-- `app/api/applications/route.ts`: Kullanıcıya özel CRUD
-- `lib/auth.ts`: Şifre, çerez ve oturum yardımcıları
-- `prisma/schema.prisma`: Veri modelleri
-
-`.env`, veritabanları ve derleme çıktıları Git'e dahil edilmez. Uygulama kapalıyken `prisma/dev.db` dosyasını yedekleyebilirsiniz; bu dosya hesap ve başvuru verileri içerir. Kişisel JSON dışa aktarımlarını repoya eklemeyin.
-
-## GitHub
-
-GitHub'da boş bir repo oluşturduktan sonra bu klasörde:
-
-```bash
-git init
-git add .
-git commit -m "Build Rota application tracker with authentication"
-git branch -M main
-git remote add origin https://github.com/KULLANICI/job-application-tracker.git
-git push -u origin main
+```text
+app/                   Sayfalar ve API route'ları
+components/            Panel, giriş ve hesap kurtarma arayüzleri
+lib/                   Veritabanı, doğrulama, oturum, e-posta ve token yardımcıları
+prisma/schema.prisma   Veri modelleri
+scripts/               Veritabanı hazırlama ve entegrasyon testleri
+docs/                  Ekran görüntüleri ve dağıtım rehberi
+.github/workflows/     Otomatik CI
 ```
 
-Teknik kaynaklar: [Next.js kimlik doğrulama](https://nextjs.org/docs/app/guides/authentication), [Node.js Crypto](https://nodejs.org/docs/latest-v22.x/api/crypto.html).
+## Katkı ve lisans
+
+Değişiklikten önce bir branch aç, kodu biçimlendir ve kontrolleri çalıştır. Gerçek kullanıcı bilgilerini testlere / ekran görüntülerine koyma. [MIT lisansı](LICENSE) ile paylaşılır.
+
+Teknik kaynaklar: [Next.js authentication](https://nextjs.org/docs/app/guides/authentication), [Node.js Crypto](https://nodejs.org/docs/latest-v22.x/api/crypto.html), [Nodemailer SMTP](https://nodemailer.com/smtp), [OWASP Forgot Password](https://cheatsheetseries.owasp.org/cheatsheets/Forgot_Password_Cheat_Sheet.html).
